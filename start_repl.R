@@ -16,3 +16,4 @@ use_python(python_env, required = TRUE)
 py_config()
 
 reticulate::repl_python()
+

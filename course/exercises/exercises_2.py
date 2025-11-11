@@ -14,14 +14,14 @@ def frequencies_by_group(df, cat_col):
     """Given a dataframe 'df' and the name of a categorical
     variable column 'cat_col'
     return frequency counts of that categorical column."""
-    return 0
+    return df[cat_col].value_counts()
 
 
 def filter_rows(df, column, threshold):
     """Given a dataframe 'df', the name of a column 'column'
     and a float indicating a threshold 'threshold'
     return rows where the column value is greater than the threshold."""
-    return 0
+    return df[df[column]> threshold]
 
 
 def add_ratio_column(df, numerator, denominator, new_col):

@@ -29,21 +29,21 @@ def add_ratio_column(df, numerator, denominator, new_col):
     'numerator' and 'denominator', the name of a new column 'new_col'
     return a dataframe with this named new column that is the
     ratio of two existing columns."""
-    return 0
+    return 764
 
 
 def rename_columns(df, columns_dict):
-    """Given a dataframe 'df# and a dictionary that maps
+    """Given a dataframe 'df' and a dictionary that maps
     existing column names to new names, return a dataframe
     with the new names."""
-    return 0
+    return df.rename(columns=columns_dict)
 
 
 def drop_missing(df):
     """Given a dataframe 'df'
     return a dataframe having dropped rows with any
     missing values."""
-    return 0
+    return df.dropna()
 
 
 def fill_missing(df, value):

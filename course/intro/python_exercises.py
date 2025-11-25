@@ -19,7 +19,7 @@ def reverse_string(s):
 def filter_even(numbers):
     """Given a list of numbers 'numbers'
     return a list containing only the even numbers from the input list."""
-    return [n for n in numbers if n % 2 ==0]
+    return [n for n in numbers if n % 2 == 0]
 
 
 def get_fifth_row(df):

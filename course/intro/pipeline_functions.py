@@ -14,9 +14,7 @@ def plot_scatter(df, x_name, y_name):
 
 def calculate_correlation(df, x1, x2):
     """Given a dataframe containing numeric columns specified by x1 and x2,
-    return two numbers: 
-    - the Pearson correlation coefficient 
-    - the p-value (significance of this estimate)
+    return two numbers:- the Pearson correlation coefficient - the p-value (significance of this estimate)
     """
     corr, p_value = pearsonr(df[x1], df[x2])
     return corr, p_value

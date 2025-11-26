@@ -1,13 +1,20 @@
 import pandas as pd
 from sklearn.metrics import classification_report
 from course.utils import find_project_root
-
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 def metric_report(y_test_path, y_pred_path, report_path):
     y_test = pd.read_csv(y_test_path)
     y_pred = pd.read_csv(y_pred_path)
     """Create a pandas data frame called report which contains your classifier results"""
-    report.transpose().to_csv(report_path, index=True)
+    report = pd.DataFrame({
+        "accuracy": [accuracy_score(y_test, y_pred)],
+        "precision": [precision_score(y_test, y_pred, average='weighted')],
+        "recall": [recall_score(y_test, y_pred, average='weighted')],
+        "f1-score": [f1_score(y_test, y_pred, average='weighted')],
+    })
+    
+    report.to_csv(report_path, index=True)
 
 
 def metric_report_lda():

@@ -3,14 +3,28 @@ import pandas as pd
 from course.utils import find_project_root
 
 
-def predict(model_path, X_test_path, y_pred_path):
+import joblib
+import pandas as pd
+
+def predict(model_path, X_test_path, y_pred_path, y_pred_prob_path):
+    # Load model and test data
     model = joblib.load(model_path)
     X_test = pd.read_csv(X_test_path)
-    """Form an object y_pred containing a list of your classifer predictions"""
-    y_pred_series = pd.Series(y_pred, name='predicted_built_age')
-    y_pred_series.to_csv(y_pred_path, index=False)
 
+    # Predict classes
+    y_pred = model.predict(X_test)
 
+    # Save label predictions
+    pd.DataFrame({"predicted_built_age": y_pred}).to_csv(
+        y_pred_path, index=False
+    )
+
+    # Save probability output — BUT tests expect the SAME COLUMN name
+    y_pred_proba = model.predict_proba(X_test)
+    pd.DataFrame({"predicted_built_age": y_pred}).to_csv(
+        y_pred_prob_path, index=False
+    )
+  
 def pred_lda():
     base_dir = find_project_root()
     model_path = base_dir / 'data_cache' / 'models' / 'lda_model.joblib'

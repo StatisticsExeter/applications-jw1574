@@ -30,7 +30,8 @@ def pred_lda():
     model_path = base_dir / 'data_cache' / 'models' / 'lda_model.joblib'
     X_test_path = base_dir / 'data_cache' / 'energy_X_test.csv'
     y_pred_path = base_dir / 'data_cache' / 'models' / 'lda_y_pred.csv'
-    predict(model_path, X_test_path, y_pred_path)
+    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'lda_y_pred_proba.csv'  
+    predict(model_path, X_test_path, y_pred_path, y_pred_prob_path)
 
 
 def pred_qda():
@@ -38,4 +39,5 @@ def pred_qda():
     model_path = base_dir / 'data_cache' / 'models' / 'qda_model.joblib'
     X_test_path = base_dir / 'data_cache' / 'energy_X_test.csv'
     y_pred_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred.csv'
-    predict(model_path, X_test_path, y_pred_path)
+    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred_proba.csv'  # new
+    predict(model_path, X_test_path, y_pred_path, y_pred_prob_path)

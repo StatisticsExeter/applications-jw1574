@@ -13,17 +13,13 @@ def predict(model_path, X_test_path, y_pred_path, y_pred_prob_path):
 
     # Predict classes
     y_pred = model.predict(X_test)
+    pd.DataFrame({"predicted_built_age": y_pred}).to_csv(y_pred_path, index=False)
 
-    # Save label predictions
-    pd.DataFrame({"predicted_built_age": y_pred}).to_csv(
-        y_pred_path, index=False
-    )
-
-    # Save probability output — BUT tests expect the SAME COLUMN name
+    # Predict probabilities
     y_pred_proba = model.predict_proba(X_test)
-    pd.DataFrame({"predicted_built_age": y_pred}).to_csv(
-        y_pred_prob_path, index=False
-    )
+
+    
+    pd.DataFrame({"predicted_built_age": y_pred_proba[:, 1]}).to_csv(y_pred_prob_path, index=False)
   
 def pred_lda():
     base_dir = find_project_root()
@@ -39,5 +35,5 @@ def pred_qda():
     model_path = base_dir / 'data_cache' / 'models' / 'qda_model.joblib'
     X_test_path = base_dir / 'data_cache' / 'energy_X_test.csv'
     y_pred_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred.csv'
-    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred_proba.csv'  # new
+    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred_proba.csv'  
     predict(model_path, X_test_path, y_pred_path, y_pred_prob_path)

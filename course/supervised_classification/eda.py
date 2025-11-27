@@ -16,24 +16,10 @@ def plot_scatter():
 
 
 def scatter_onecat(df, cat_column, title):
-    """Return a plotly express figure which is a scatterplot of all numeric columns in df
-    with markers/colours given by the text in column cat_column
-    and overall title specfied by title"""
     numeric_cols = df.select_dtypes(include="number").columns
-
-    # Use the first two numeric columns for the scatter plot
-    x_col = numeric_cols[0]
-    y_col = numeric_cols[1]
-
-    fig = px.scatter(
-        df,
-        x=x_col,
-        y=y_col,
-        color=cat_column,
-        title=title
-    )
-
-    return fig 
+    x_col, y_col = numeric_cols[:2]
+    fig = px.scatter(df, x=x_col, y=y_col, color=cat_column, title=title)
+    return fig
 
 
 def get_frequencies(df, cat_column):

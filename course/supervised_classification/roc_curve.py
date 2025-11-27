@@ -18,9 +18,9 @@ def _get_roc_results(y_test_path, y_pred_prob_path):
 def plot_roc_curve():
     base_dir = find_project_root()
     y_test_path = base_dir / 'data_cache' / 'energy_y_test.csv'
-    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'lda_y_pred_prob.csv'
+    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'lda_y_pred_proba.csv'
     lda_results = _get_roc_results(y_test_path, y_pred_prob_path)
-    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred_prob.csv'
+    y_pred_prob_path = base_dir / 'data_cache' / 'models' / 'qda_y_pred_proba.csv'
     qda_results = _get_roc_results(y_test_path, y_pred_prob_path)
     fig = _plot_roc_curve(lda_results, qda_results)
     outpath = base_dir / 'data_cache' / 'vignettes' / 'supervised_classification' / 'roc.html'

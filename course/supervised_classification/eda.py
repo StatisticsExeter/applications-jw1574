@@ -10,9 +10,13 @@ def plot_scatter():
     base_dir = find_project_root()
     df = pd.read_csv(base_dir / 'data_cache' / 'energy.csv')
     outpath = base_dir / VIGNETTE_DIR / 'scatterplot.html'
+    outpath.parent.mkdir(parents=True, exist_ok=True)
     title = "Energy variables showing different built_age type"
     fig = scatter_onecat(df, 'built_age', title)
-    fig.write_html(outpath)
+    if fig is not None:
+        fig.write_html(outpath)
+    else:
+        raise ValueError("scatter_onecat returned None")
 
 
 def scatter_onecat(df, cat_column, title):

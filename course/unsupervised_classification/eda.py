@@ -19,4 +19,12 @@ def _scatter(df, title):
     """When called with dataframe 'df' and a string 'title'
     Return a plotlty express object which is a scatterplot of all numeric variables
     in the dataframe. The title should be as provided in the function call"""
-    return 0
+    numeric_cols = df.select_dtypes(include="number").columns
+
+    if len(numeric_cols) < 2:
+        raise ValueError("Dataframe must contain at least two numeric columns")
+
+    # Return a scatter matrix (scatter plot for all numeric columns)
+    fig = px.scatter_matrix(df[numeric_cols], title=title)
+
+    return fig

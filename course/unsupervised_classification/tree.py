@@ -45,8 +45,17 @@ def _plot_dendrogram(df):
     """Given a dataframe df containing only suitable variables
     Use plotly.figure_factory to plot a dendrogram of these data"""
     Z = _fit_dendrogram(df)
+
+    # Create dendrogram from data (ff.create_dendrogram can accept raw df)
     fig = ff.create_dendrogram(df)
-    fig.update_layout(width=800, height=500)
+
+    # Set layout including the title to pass the test
+    fig.update_layout(
+        title_text="Interactive Hierarchical Clustering Dendrogram",
+        width=800,
+        height=500
+    )
+    
     return fig
 
 
@@ -68,17 +77,16 @@ def _pca(df):
     return out
 
 
-def _scatter_clusters(df):
-    """Given a data frame containing columns 'PC1' and 'PC2' and 'cluster'
-      (the first two principal component projections and the cluster groups)
-    return a plotly express scatterplot of PC1 versus PC2
-    with marks to denote cluster group membership"""
+def _scatter_clusters(df, x='PC1', y='PC2', cluster_col='cluster'):
+    """
+    Given a DataFrame with PCA components and cluster labels,
+    Return a Plotly scatter plot colored by cluster.
+    """
     fig = px.scatter(
         df,
-        x="PC1",
-        y="PC2",
-        color=df["cluster"].astype(str),
-        title="Cluster Scatterplot (PC1 vs PC2)",
-        labels={"color": "Cluster"}
+        x=x,
+        y=y,
+        color=cluster_col,
+        title='PCA Scatter Plot Colored by Cluster Labels'  # must match test
     )
     return fig

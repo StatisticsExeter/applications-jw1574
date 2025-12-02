@@ -1,4 +1,4 @@
-from scipy.cluster.hierarchy import linkage, fcluster
+from scipy.cluster.hierarchy import linkage, fcluster, cut_tree
 import plotly.figure_factory as ff
 import plotly.express as px
 import pandas as pd
@@ -37,26 +37,35 @@ def hierarchical_groups(height):
 def _fit_dendrogram(df):
     """Given a dataframe containing only suitable values
     Return a scipy.cluster.hierarchy hierarchical clustering solution to these data"""
-    return 0
+    Z = linkage(df, method="ward")
+    return Z
 
 
 def _plot_dendrogram(df):
     """Given a dataframe df containing only suitable variables
     Use plotly.figure_factory to plot a dendrogram of these data"""
-    return 0
+    Z = _fit_dendrogram(df)
+    fig = ff.create_dendrogram(df)
+    fig.update_layout(width=800, height=500)
+    return fig
 
 
 def _cutree(tree, height):
     """Given a scipy.cluster.hierarchy hierarchical clustering solution and a float of the height
     Cut the tree at that hight and return the solution (cluster group membership) as a
     data frame with one column called 'cluster'"""
-    return 0
+    clusters = cut_tree(tree, height=height).flatten()
+    out = pd.DataFrame({'cluster': clusters.astype(int)})
+    return out
 
 
 def _pca(df):
     """Given a dataframe of only suitable variables
     return a dataframe of the first two pca predictions (z values) with columns 'PC1' and 'PC2'"""
-    return 0
+    pca = PCA(n_components=2)
+    pcs = pca.fit_transform(df)
+    out = pd.DataFrame(pcs, columns=["PC1", "PC2"])
+    return out
 
 
 def _scatter_clusters(df):
@@ -64,4 +73,12 @@ def _scatter_clusters(df):
       (the first two principal component projections and the cluster groups)
     return a plotly express scatterplot of PC1 versus PC2
     with marks to denote cluster group membership"""
-    return 0
+    fig = px.scatter(
+        df,
+        x="PC1",
+        y="PC2",
+        color=df["cluster"].astype(str),
+        title="Cluster Scatterplot (PC1 vs PC2)",
+        labels={"color": "Cluster"}
+    )
+    return fig

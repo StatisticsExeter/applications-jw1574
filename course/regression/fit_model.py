@@ -3,7 +3,7 @@ import numpy as np
 import statsmodels.formula.api as smf
 from pathlib import Path
 from course.utils import find_project_root
-
+from statsmodels.regression.mixed_linear_model import MixedLM
 VIGNETTE_DIR = Path('data_cache') / 'vignettes' / 'regression'
 
 
@@ -13,7 +13,19 @@ def _fit_model(df):
     Fit a linear mixed model with shortfall as the response variable
     n_rooms and age as fixed predictors
     with local_authority_code as a random effect"""
-    return 0
+    df['local_authority_code'] = df['local_authority_code'].astype('category')
+    
+    # Define model
+    model = MixedLM(
+        endog=df['shortfall'],
+        exog=df[['n_rooms', 'age']],
+        groups=df['local_authority_code']
+    )
+    
+    # Fit model
+    result = model.fit()
+    
+    return result
 
 
 def _save_model_summary(model, outpath):

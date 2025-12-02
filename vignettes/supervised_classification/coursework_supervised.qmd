@@ -3,7 +3,7 @@ title: "Building a classifier to predicting house age"
 author: "Anonymous"
 format: 
   html:
-    embed-resources: true
+    embed-resources: false 
 
 ---
 
@@ -32,10 +32,7 @@ The data have been used for various published supervised classification exercise
 In reducing the carbon footprint of UK housing, it is important to develop a strategy that offers the right solutions to the right properties. It is widely believed that houses build before 1930 require very different approaches to houses built after that period.  In this task, you are required to determine whether it is possible to determine the age of a house based on several recorded energy metrics. These are `current_energy_efficiency`, `environment_impact_current`, `energy_consumption_current`, `co2_emissions_current`, `lighting_cost_current`, `heating_cost_current`, `hot_water_cost_current`.  You have data for all certificates issued in a single local authority area.  This would help the local authority identify the right targets just using metrics rather than requiring a visit to the property to determine its age.
 
 
-```{python}
-import sys
-sys.path.append(r"C:\Users\JWWeb\OneDrive - University of Exeter\Documents\applications-jw1574")
-```
+
 
 
 ## The Data
@@ -100,18 +97,11 @@ fig
 ```
  
 It is always useful to view a scatterplot of the data, marking the two known groups
-```{python}
-tables = pd.read_html('../../data_cache/vignettes/supervised_classification/scatterplot.html')
-df = tables[0]  # first table in the file
-```
+
+![](../../data_cache/vignettes/supervised_classification.scatterplot.html){width="100%" height="600px"}
 
 
-```{python}
 
-```
-
-
-[](../../data_cache/vignettes/supervised_classification/scatterplot.html){width="100%" height="600px"}
 
 
 
@@ -120,12 +110,7 @@ For more marks, you may wish to extend this EDA section slightly.  We can extrac
 
 ## Fitting LDA and QDA classifiers
 
-The simplest classifiers we could apply are Linear and Quadratic Discriminant analysis.
-```{python}
-from course.supervised_classification.metrics import metric_report_lda 
-
-metric_report_lda()
-```
+The simplest classifiers we could apply are Linear and Quadratic Discriminant analysis
 
 
 ```{python}
@@ -155,13 +140,8 @@ You should comment on these results. You may wish to add an interpretation of th
 We can of course examine the AUC for these classifiers.
 
 
-![](../../data_cache/vignettes/supervised_classification/roc.html){width="100%" height="600px"}
-```{python}
-from course.supervised_classification.roc_curve import plot_roc_curve
+![](data_cache/vignettes/supervised_classification/roc.html){width="100%" height="600px"}
 
-plot_roc_curve('lda_csv')
-
-```
 
 
 You should comment on the performance of the classifier.

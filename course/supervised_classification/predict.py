@@ -3,9 +3,6 @@ import pandas as pd
 from course.utils import find_project_root
 
 
-import joblib
-import pandas as pd
-
 def predict(model_path, X_test_path, y_pred_path, y_pred_prob_path):
     # Load model and test data
     model = joblib.load(model_path)
@@ -17,10 +14,9 @@ def predict(model_path, X_test_path, y_pred_path, y_pred_prob_path):
 
     # Predict probabilities
     y_pred_proba = model.predict_proba(X_test)
-
-    
     pd.DataFrame({"predicted_built_age": y_pred_proba[:, 1]}).to_csv(y_pred_prob_path, index=False)
-  
+
+
 def pred_lda():
     base_dir = find_project_root()
     model_path = base_dir / 'data_cache' / 'models' / 'lda_model.joblib'

@@ -18,7 +18,7 @@ def fit_lda():
     model_path = base_dir / 'data_cache' / 'models' / 'lda_model.joblib'
     """Initialise a linear discriminant analysis classifierr called classifier which can be
     passed to fit_classifier and fitted by classifer.fit()"""
-    classifier= LinearDiscriminantAnalysis()
+    classifier = LinearDiscriminantAnalysis()
     fit_classifier(X_train_path, y_train_path, model_path, classifier)
 
 

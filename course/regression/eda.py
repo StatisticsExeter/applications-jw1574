@@ -13,6 +13,7 @@ def _boxplot(df, x_var, y_var, title):
     fig = px.box(df, x=x_var, y=y_var, title=title)
     return fig
 
+
 def boxplot_age():
     base_dir = find_project_root()
     df = pd.read_csv(base_dir / 'data_cache' / 'la_energy.csv')

@@ -1,6 +1,3 @@
-#| echo: false
-#| eval: true
-#| results: 'asis'
 import pandas as pd
 import numpy as np
 import statsmodels.formula.api as smf
@@ -12,7 +9,7 @@ VIGNETTE_DIR = Path('data_cache') / 'vignettes' / 'regression'
 
 def _fit_modelQ(df):
     model = smf.mixedlm(
-        "shortfall ~ n_rooms + I(n_rooms**2) + age", 
+        "shortfall ~ n_rooms + I(n_rooms**2) + age",
         df,
         groups=df["local_authority_code"]
     )

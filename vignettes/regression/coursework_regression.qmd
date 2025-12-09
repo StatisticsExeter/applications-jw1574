@@ -166,15 +166,14 @@ fig.show()
 As we cannot be satisfied with checking the models validity with one test I used a QQ-plot 
 This QQ-plot fo the model shows that the residuals are not normally distributed because there is a clear deviation from the 45 degree line especially on the right tail side. This suggest that the model is not capturing non-linear relationships and the data is  heteroscedastic. 
 
-Overall the model diagnostics show that some of the assumptions needed for the model to work are not met. The residual vs fitted scatter plot shows clear heteroscedasticity and nonlinear patterns. The QQ-plot reinforces both of these finding as well as showing that the model is not normally distributed. Therefore the modeling might be missing key predictors. 
+Overall the model diagnostics show that some of the assumptions needed for the model to work are not met. The residual vs fitted scatter plot shows clear heteroscedasticity and nonlinear patterns. The QQ-plot reinforces both of these finding as well as showing that the model is not normally distributed. Both plots show that shortfall decreases slightly at small numbers of rooms then starts to increase with number of rooms(we saw this in the boxplot) therefore the model is missing key predictors. 
 
 A sensible next step would be to explore alternative models such as adding non-linear terms to better capture the patterns shown above. 
 
-For additional credit you might like to enhance the exploratory data analysis. You could consider residual diagnostics to check the validity of the model fit. You may also like to consider the appropriateness of the adjusting variables age and number of rooms. You could consider extracting further variables from the database and fitting a slightly more elaborate model.
 
-##Adding a non linear term 
+## Adding a non linear term 
 
-Because we see in the residual vs fitted scatter-plot we an almost quadratic graph i decided to add a quadratic term into the model. 
+As we have see above in the residual vs fitted scatter-plot there is an almost quadratic graph. Therefore i decided to add a quadratic term into the model. 
 
 $$Y_{ji} = \beta_0 + \beta_1 x_{j}^{(\text{old})} + \sum_{r=1}^{10} \beta_r x_{j}^{(r)} + (\sum_{r=1}^{10} \beta_r x_{j}^{(r)})^2 + \gamma_j$$
 
@@ -187,6 +186,12 @@ with open('../../data_cache/vignettes/regression/model2_fit.txt') as f:
     content = f.read()
     print(content)
 ```
+Fitting the quadratic model improves the results slightly by allowing some curvature between the predictors and shortfall. The negative linear term (–0.804) combined with the positive quadratic term (0.169) indicates a U-shaped relationship, where shortfall initially decreases as the number of rooms increases, but begins to rise again for properties with a larger number of rooms. This is what we observed in the box plot above (Properties with 1 room seemed to have a higher shortfall than with 2 and 3 rooms). The age coeffiecnt remains the same and still is statistically significant. The random-effects variance (0.514) suggests that there still is group variation likely caused by different local authorities. 
+
+
+
+Checking the model diagnostics using a residual vs fitted plot and a QQ-plot
+
 ```{python}
 #| echo: false
 #| eval: true
@@ -227,7 +232,7 @@ fig.add_hline(y=0)  # optional reference line
 fig.show()
 ```
 
-
+After adding the quadratic term in the model the U-shaped has reduced however it is still present. This means that the new model is still not normally distributed and therefore still not suitable. Also the spread of residuals increases for higher fitted values, indicating heteroscedasticity. 
 
 ```{python}
 #| echo: false
@@ -273,6 +278,10 @@ fig.update_layout(
 
 fig.show()
 ```
+
+The QQ-plot for the new model confirms the non-normality indicated in the plot above. While the central portion of the residual distribution lies close to the 45° reference line, both tails depart dramatically (the right hand side even more so).
+What i find interesting is that in all 4 of the plots the right and tail has been really high meaning that both models fail to predict a subset of variables that have an unusually high shortfall which may be because there are systematically extreme values in the data. The next steps should therefore focus on addressing these distributional problems
+
 
 ## Record of AI use for MTHM503 Regression coursework
 

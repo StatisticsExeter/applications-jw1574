@@ -1,4 +1,4 @@
-from scipy.cluster.hierarchy import linkage, fcluster, cut_tree
+from scipy.cluster.hierarchy import linkage, cut_tree
 import plotly.figure_factory as ff
 import plotly.express as px
 import pandas as pd
@@ -44,7 +44,6 @@ def _fit_dendrogram(df):
 def _plot_dendrogram(df):
     """Given a dataframe df containing only suitable variables
     Use plotly.figure_factory to plot a dendrogram of these data"""
-    Z = _fit_dendrogram(df)
 
     # Create dendrogram from data (ff.create_dendrogram can accept raw df)
     fig = ff.create_dendrogram(df)
@@ -55,7 +54,7 @@ def _plot_dendrogram(df):
         width=800,
         height=500
     )
-    
+
     return fig
 
 

@@ -24,10 +24,12 @@ def plot_roc_curve():
     qda_results = _get_roc_results(y_test_path, y_pred_prob_path)
     fig = _plot_roc_curve(lda_results, qda_results)
     outpath = base_dir / 'data_cache' / 'vignettes' / 'supervised_classification' / 'roc.html'
+    y_pred_prob_path = base_dir / 'data_cache' / 'vignettes' / 'supervied_classification' /'rf_csv.csv'
+    rf_results = _get_roc_results(y_test_path, y_pred_prob_path)
     fig.write_html(outpath)
 
 
-def _plot_roc_curve(lda_roc, qda_roc):
+def _plot_roc_curve(lda_roc, qda_roc,rf_roc):
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=lda_roc['fpr'], y=lda_roc['tpr'],
                              mode='lines',
@@ -38,6 +40,10 @@ def _plot_roc_curve(lda_roc, qda_roc):
     fig.add_trace(go.Scatter(x=[0, 1], y=[0, 1],
                              mode='lines',
                              name='Random', line=dict(dash='dash')))
+    fig.add_trace(go.Scatter(
+        x=rf_roc['fpr'], y=rf_roc['tpr'],
+        mode='lines',
+        name=f'ROC curve from RF (AUC = {rf_roc["roc_auc"]:.2f})'))
     fig.update_layout(
         title='ROC Curve',
         xaxis_title='False Positive Rate',

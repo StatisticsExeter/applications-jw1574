@@ -31,3 +31,6 @@ def fit_qda():
     # Initialise QDA classifier
     classifier = QuadraticDiscriminantAnalysis()
     fit_classifier(X_train_path, y_train_path, model_path, classifier)
+    
+    
+

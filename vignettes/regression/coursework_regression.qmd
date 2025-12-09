@@ -3,7 +3,7 @@ title: "Understanding costs"
 author: "Anonymous"
 format: 
   html:
-    embed-resources: true
+    embed-resources: false
     math: mathjax
 
 ---
@@ -45,14 +45,18 @@ Some initial exploratory data analysis shows us how the carbon emissions vary by
 
 
 
-![](../../data_cache/vignettes/regression/boxplot_age.html){width="100%" height="600px"}
+![](boxplot_age.html){width="100%" height="600px"}
 
-![](../../data_cache/vignettes/regression/boxplot_rooms.html){width="100%" height="600px"}
+This box plot compares the shortfall of houses with age, in the case shortfall means how far a property falls short of a target level of carbon performance or energy efficiency. It shows that older properties have a higher and more varied shortfall compared to the more recent ones. The medium line is clearly higher for older properties and its interquatile range is larger suggesting that a greater spread in performance. Old properties also have more high outliers suggesting that a group of them perform particularly worse. Overall the box plot shows that older properties have a higher shortfall and are more varied where as recent builing perfom more constitanlty and better.  
+
+![](boxplot_rooms.html){width="100%" height="600px"} 
+
+This box plot compares shortfall of properties with differnt number of rooms. The plot clearly shows a positive increase of shortfall and variation as the number of rooms goes up. What I think stands out is that properties with 1 room have a higher lower quatile range, medium, upper quartile range, outliers and more variablity compared to properties with two rooms. This suggests that although shortfall generally increases with property size, very small properties exhibit more inconsistent performance compared with slightly larger ones.
 
 
 ## The model
 
-A model can be fitted and a summary of the fixed effects produced
+After fitting the model above we get a summary of the fixed effects produced.
 
 
 ```{python}
@@ -63,19 +67,212 @@ with open('../../data_cache/vignettes/regression/model_fit.txt') as f:
     content = f.read()
     print(content)
 ```
-
+These results show that more recent properties have a lower shortfall than others. The coefficient for age(T.Recent) is –2.98, which means that recent houses have almost 3 units less shortfall than old houses, this results is statistically significant because the z (-65) score is much larger than 2. These results also show there is a relationship between the number of rooms to shortfall because the coefficient for n_rooms is +1.054, meaning each additional room increases shortfall by about 1 unit. The group variance is 0.434 which suggest that shortfall is varied across different local authorities, as in some local authorities have a more efficient set of properties. Overall the results show new and smaller properties perform better and local authorities vary. 
 
 ## The key insight
 
 We've been asked to rate local authority performance, so the most important result is a ``caterpillar plot'' of the random effects.
 
 
-![](../../data_cache/vignettes/regression/caterpillar.html){width="100%" height="600px"}
+![](caterpillar.html){width="100%" height="600px"}
 
 ##  Additional credit
 
+```{python}
+#| echo: false
+#| eval: true
+#| results: 'asis'
+import pandas as pd
+import sys
+from pathlib import Path
+
+# Make sure project root is added
+project_root = Path().resolve().parents[1]
+sys.path.append(str(project_root))
+
+# Load your data FIRST
+df = pd.read_csv(project_root / "data_cache" / "la_energy.csv")
+print(df.columns)
+# Import your model functions
+from course.regression.fit_model import _fit_model
+results = _fit_model(df)
+
+
+# Save fitted values and residuals for each model
+df["fitted_linear"] = results.fittedvalues
+df["resid_linear"]  = results.resid
+
+
+
+
+import plotly.express as px
+
+fig = px.scatter(
+    df,
+    x="fitted_linear",
+    y="resid_linear",
+    title="Residuals vs Fitted – Linear Model",
+    labels={"fitted_linear": "Fitted values", "resid_linear": "Residuals"}
+)
+fig.add_hline(y=0)  # optional reference line
+fig.show()
+```
+
+This is a residual vs fitted value plot, it clearly shows a U shaped (or quadratic) which shows that the relationship between the predictors and the response variable are not linear. In a well fitted model the residuals should be scattered around 0 in this one however we see curvature. Residuals are positive for small fitted values, negative in the middle and strongly positive at larger fitted values. This suggests that the model is not capturing the true relationship so may require additional predictors or nonlinear transforms.
+```{python}
+#| echo: false
+#| eval: true
+#| results: 'asis'
+import plotly.graph_objs as go
+import numpy as np
+from scipy import stats
+
+# Extract residuals
+residuals = results.resid
+
+# Compute theoretical quantiles and sample quantiles
+theoretical_quantiles = np.sort(stats.norm.ppf(np.linspace(0.001, 0.999, len(residuals))))
+sample_quantiles = np.sort(residuals)
+
+# Create QQ plot
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=theoretical_quantiles,
+    y=sample_quantiles,
+    mode='markers',
+    name='Residuals',
+    marker=dict(color='royalblue', size=5)
+))
+
+# Add 45-degree line
+fig.add_trace(go.Scatter(
+    x=theoretical_quantiles,
+    y=theoretical_quantiles,
+    mode='lines',
+    name='45° Line',
+    line=dict(color='red', dash='dash')
+))
+
+fig.update_layout(
+    title="QQ Plot of Residuals",
+    xaxis_title="Theoretical Quantiles",
+    yaxis_title="Sample Quantiles",
+    template="simple_white"
+)
+
+fig.show()
+```
+As we cannot be satisfied with checking the models validity with one test I used a QQ-plot 
+This QQ-plot fo the model shows that the residuals are not normally distributed because there is a clear deviation from the 45 degree line especially on the right tail side. This suggest that the model is not capturing non-linear relationships and the data is  heteroscedastic. 
+
+Overall the model diagnostics show that some of the assumptions needed for the model to work are not met. The residual vs fitted scatter plot shows clear heteroscedasticity and nonlinear patterns. The QQ-plot reinforces both of these finding as well as showing that the model is not normally distributed. Therefore the modeling might be missing key predictors. 
+
+A sensible next step would be to explore alternative models such as adding non-linear terms to better capture the patterns shown above. 
+
 For additional credit you might like to enhance the exploratory data analysis. You could consider residual diagnostics to check the validity of the model fit. You may also like to consider the appropriateness of the adjusting variables age and number of rooms. You could consider extracting further variables from the database and fitting a slightly more elaborate model.
 
+##Adding a non linear term 
+
+Because we see in the residual vs fitted scatter-plot we an almost quadratic graph i decided to add a quadratic term into the model. 
+
+$$Y_{ji} = \beta_0 + \beta_1 x_{j}^{(\text{old})} + \sum_{r=1}^{10} \beta_r x_{j}^{(r)} + (\sum_{r=1}^{10} \beta_r x_{j}^{(r)})^2 + \gamma_j$$
+
+
+```{python}
+#| echo: false
+#| eval: true
+#| results: 'asis'
+with open('../../data_cache/vignettes/regression/model2_fit.txt') as f:
+    content = f.read()
+    print(content)
+```
+```{python}
+#| echo: false
+#| eval: true
+#| results: 'asis'
+import pandas as pd
+import sys
+from pathlib import Path
+
+# Make sure project root is added
+project_root = Path().resolve().parents[1]
+sys.path.append(str(project_root))
+
+# Load your data FIRST
+df = pd.read_csv(project_root / "data_cache" / "la_energy.csv")
+
+# Import your model functions
+from course.regression.Quadratic_fit import _fit_modelQ
+results = _fit_modelQ(df)
+
+
+# Save fitted values and residuals for each model
+df["fitted_Quadratic"] = results.fittedvalues
+df["resid_Quadratic"]  = results.resid
+
+
+
+
+import plotly.express as px
+
+fig = px.scatter(
+    df,
+    x="fitted_Quadratic",
+    y="resid_Quadratic",
+    title="Residuals vs Fitted – Quadratic Model",
+    labels={"fitted_Quadratic": "Fitted values", "resid_Quadratic": "Residuals"}
+)
+fig.add_hline(y=0)  # optional reference line
+fig.show()
+```
+
+
+
+```{python}
+#| echo: false
+#| eval: true
+#| results: 'asis'
+import plotly.graph_objs as go
+import numpy as np
+from scipy import stats
+
+# Extract residuals
+residuals = results.resid
+
+# Compute theoretical quantiles and sample quantiles
+theoretical_quantiles = np.sort(stats.norm.ppf(np.linspace(0.001, 0.999, len(residuals))))
+sample_quantiles = np.sort(residuals)
+
+# Create QQ plot
+fig = go.Figure()
+
+fig.add_trace(go.Scatter(
+    x=theoretical_quantiles,
+    y=sample_quantiles,
+    mode='markers',
+    name='Residuals',
+    marker=dict(color='royalblue', size=5)
+))
+
+# Add 45-degree line
+fig.add_trace(go.Scatter(
+    x=theoretical_quantiles,
+    y=theoretical_quantiles,
+    mode='lines',
+    name='45° Line',
+    line=dict(color='red', dash='dash')
+))
+
+fig.update_layout(
+    title="QQ Plot of Residuals",
+    xaxis_title="Theoretical Quantiles",
+    yaxis_title="Sample Quantiles",
+    template="simple_white"
+)
+
+fig.show()
+```
 
 ## Record of AI use for MTHM503 Regression coursework
 
@@ -84,7 +281,7 @@ Instructions: You can use this document to record when, how and why you used Gen
 | **Date**       | **AI tool used** | **Purpose**                                | **Prompt**                                 | **Hyperlink to output (where possible)** | **Section of work used for** |
 |----------------|------------------|--------------------------------------------|--------------------------------------------|------------------------------------------|-------------------------------|
 | E.g. 15/07/2025| MS Copilot       | To help create an organised essay structure| ‘Generate ideas for structuring an essay on...’ | [insert link]                          | introduction                  |
-|                |                  |                                            |                                            |                                          |                               |
+|    08/12/25            |   chatgbt               |   help with coding a qq plot and residual vs fitted scatter plot https://chatgpt.com/g/g-p-69341147abf8819199a8227401ffc62d/c/6936ea90-c170-8326-8d6f-313fa67e13c1                                         |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |

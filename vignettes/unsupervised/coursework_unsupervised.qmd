@@ -3,7 +3,7 @@ title: "Clustering local authorities by road collision patterns"
 author: "Anonymous"
 format: 
   html:
-    embed-resources: true
+    embed-resources: false
 
 ---
 
@@ -57,9 +57,11 @@ Some previous cluster analysis work has been reported at:
 
 The first thing we can do is consider a scatterplot of the data
 
-![](../../data_cache/vignettes/unsupervised_classification/scatterplot.html){width="100%" height="600px"}
 
-We are going to use the proportion of each subtype of collision that was reported, and rescale the variables.
+![](scatterplot.html){width="100%" height="600px"}
+The scatter plot matrix provides an overview of how different types of crashes relate to one another in each local authority. The points represent the proportion of two variables of crashes in one local authority. n_dry against n_raining shows a strong negative relationship which would make sense as rainy crashes are not going to happen on dry roads. If almost all the points fall into the same small region, this tells us that the authorities have very similar proportions for those two types of crashes for example n_dark against n_raining. This means that these two variables will not be very good at trying to distinguish between the local authorities. This is why we use clustering and PCA, which consider all variables simultaneously and can reveal structure that is we cannot see from the scatter plots.
+
+We are going to use the proportion of each subtype of collision that was reported, and re scale the variables.
 
 
 ## Hierarchical clustering
@@ -67,41 +69,127 @@ We are going to use the proportion of each subtype of collision that was reporte
 
 The first task is to perform hierarchical clustering.
 
-![](../../data_cache/vignettes/unsupervised_classification/dendrogram.html){width="100%" height="600px"}
+![](dendrogram.html){width="400%" height="600px"}
+The hierarchical clustering dendrogram shows three main clusters of local authorities based on the proportions of different crash types. The green clusters represent local authorities that are similar to each other, merging at low linkage numbers. The red cluster is the largest suggesting that a lot of local authorities are similar however due to having higher linkage numbers the authorities have more variation than the green cluster. The blue cluster has the highest merging numbers suggesting the largest variation within the group.
+
+To determine the number of clusters, the hierarchical dendrogram was cut at a height of 10, which produces four groups. The scatter plot shows the 4 clusters in different colors with cluster 0 and 2 forming tight overlapping clusters suggesting that their crash characteristics are relatively similar. cluster 1 shows the most separation (no overlaps of points) from the other 3, this means that the local authorities in this cluster have different characteristics from the rest. Cluster 3 is spread out showing a high variability with the group. 
+
+Scatterplot of the first two principal components.
 
 
-You need to select a suitable ``cut-point'' and cut the tree at an appropriate height to form a number of clusters.
-
-To aid visualisation of results, you should plot the cluster membership on a scatterplot of the first two principal components.
-
-
-![](../../data_cache/vignettes/unsupervised_classification/kscatter.html){width="100%" height="600px"}
+![](hscatter.html){width="100%" height="600px"}
 
 
 ## kmeans clustering
 
 
 The second task is to perform k-means clustering. You should select an appropriate number of clusters.
-First, you should look at the cluster centroids:
+The number of clusters chosen was 4, this comes from the hierarchical analysis above. After seperasting the data into the clusters we get these cluster centroids.
 
 
-![](../../data_cache/vignettes/unsupervised_classification/kcentroids1.html){width="100%" height="600px"}
+![](kcentroids1.html){width="100%" height="600px"}
+This graph shows the number of crashes that occurred in each cluster. Cluster 0 has  the highest mean value, indicating it contains local authorities with unusually high collision counts. clusters 1 and 2 are similar indicating that both local authorities have similar crash characteristics. cluster 3 has the smallest value representing an area with fewer crashes of types we are analyzing. It is important to look at these centroid values because they tell us what each cluster represents in practical terms. 
+
+![](kcentroids2.html){width="100%" height="600px"}
+
+This graphs shows each crash variable for the 4 k-mean clusters allowing us to see the differences beyond the PCA space. Cluster 0 has the highest value for most of the crash features reinforcing the fact that it had the most number of crashes. Clustes 1 and 2 show 
+
+![](kscatter.html){width="100%" height="600px"}  
+
+The k-means scatter plot shows a similar structure to the hierarchical plot. As I have chosen the number of clusters already (4) this plots has divided the data into more even sized and separated clusters. The plots still shows that most local authority points lie into a single dominant cloud. K-means similar to hierarchical clustering is basing the clustering on the  PCA-transformed features which summerise all nine variables together into two axes. This means that total number of crashes dominates the influence the clustering because because k-means relies on Euclidean distance, so authorities with high overall crash counts tend to cluster together, while those with lower totals form separate groups. 
 
 
-![](../../data_cache/vignettes/unsupervised_classification/kcentroids2.html){width="100%" height="600px"}
+
+##  DBSCAN
+As an additional I chose to use DBSCAN. It groups together points that lie in dense regions of the data while identifying sparse regions as noise or outlines. this is good because the 'noise' doesn't distort the cluster choice. It also doesn't require me to assume how many clusters there are to begin with instead it discovers clusters based off two parameters the neighbourhood radius (eps) and the minimum number of points required to form a dense region (min_samples) which i tune to fit the data. After a lot of tuning i got these two scatter plots. Using DBSCAN in the PCA space also means that the clustering is not dominated by the total number of crashes, unlike K-means and hierarchal, because PCA balances the influence of all variables and DBSCAN identifies clusters based on density rather than distance, allowing more subtle collision patterns to emerge.  
+```{python}
+```
 
 
-As before you should plot the cluster membership on a scatterplot of the first two principal components.
+```{python}
+#| echo: false
+#| eval: true
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+from sklearn.decomposition import PCA
+import plotly.express as px
 
-![](../../data_cache/vignettes/unsupervised_classification/kscatter.html){width="100%" height="600px"}
+def dbscan_plot_pca(csv_path=r"C:\Users\JWWeb\OneDrive - University of Exeter\Documents\applications-jw1574\data_cache\la_collision.csv", eps=0.5, min_samples=3):
+    
+    df = pd.read_csv(csv_path)
+    scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df)
+    pca = PCA(n_components=2)
+    df_pca = pca.fit_transform(df_scaled)
+    db = DBSCAN(eps=eps, min_samples=min_samples)
+    clusters = db.fit_predict(df_pca)
+    df_plot = pd.DataFrame(df_pca, columns=['PC1', 'PC2'])
+    df_plot['cluster'] = clusters.astype(str)
+    df_plot['cluster'] = df_plot['cluster'].replace({'-1': 'Noise'})
+    fig = px.scatter(
+        df_plot,
+        x='PC1',
+        y='PC2',
+        color='cluster',
+        symbol='cluster',
+        title='DBSCAN Clusters on PCA Space',
+        color_discrete_sequence=px.colors.qualitative.Set1
+    )
+    fig.show()
+
+  
 
 
+dbscan_plot_pca(eps=0.29, min_samples=5)
+```
 
 
+```{python}
+#| echo: false
+#| eval: true
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import DBSCAN
+from sklearn.decomposition import PCA
+import plotly.express as px
 
-##  Additional credit
+def dbscan_plot_pca(csv_path=r"C:\Users\JWWeb\OneDrive - University of Exeter\Documents\applications-jw1574\data_cache\la_collision.csv", eps=0.5, min_samples=3):
+    
+    df = pd.read_csv(csv_path)
+    scaler = StandardScaler()
+    df_scaled = scaler.fit_transform(df)
+    pca = PCA(n_components=2)
+    df_pca = pca.fit_transform(df_scaled)
+    db = DBSCAN(eps=eps, min_samples=min_samples)
+    clusters = db.fit_predict(df_pca)
+    df_plot = pd.DataFrame(df_pca, columns=['PC1', 'PC2'])
+    df_plot['cluster'] = clusters.astype(str)
+    df_plot['cluster'] = df_plot['cluster'].replace({'-1': 'Noise'})
+    fig = px.scatter(
+        df_plot,
+        x='PC1',
+        y='PC2',
+        color='cluster',
+        symbol='cluster',
+        title='DBSCAN Clusters on PCA Space',
+        color_discrete_sequence=px.colors.qualitative.Set1
+    )
+    fig.show()
 
-For additional credit you should consider adding a further unsupervised classification method. Alternatively, you could increase the number of variables used in the clustering.
+  
+
+dbscan_plot_pca(eps=0.28, min_samples=3)
+```
+In both plots, the data were projected onto the first two principal components. I tuned the data to get 4 clusters so I could compare it with hierarchical and k-means. The first plot shows a large dense cluster in the middle with 3 smaller cluster on the outside. This suggests that many local authorities have similar collision patterns while the others have more distinct characteristics. After some more tuning I created the second scatter plot, again we see are large dense cluster in the center but with a lot more smaller clusters around the outside. In both scatter plots there is a lot of noise which suggests that many authorities are relatively isolated in PCA space meaning their crash characteristics differ so much that they cant be sorted into a well defined cluster. Both scatter plots suggest that the data contains regions of varying density rather than clearly separated groups. 
+
+DBSCAN may be effective at identifying dense cluster and outlines but highly sensitive to the two parameters eps and min_samples which need fine tuning (a skill i lack). 
+
+
+##Conclusion
+
+
+Across all three clustering methods suggest that the collision data contains one large, dense group of local authorities and only a small number of genuinely distinct subgroups. Hierarchical clustering and k-means both indicated a 4 cluster solution producing similar scatter plots . DBSCAN on the other hand, showed that the data did not form into sharply defined clusters with an even larger central group, smaller clusters and a lot of noise.DBSCAN also showed how important outliers are in clustering this type of data and that you cannot just ignore them. All 3 suggest that the data is continuous and not clearly separated and the usefulness of clustering methods when dealing with unsupervised data.
 
 
 
@@ -112,7 +200,7 @@ Instructions: You can use this document to record when, how and why you used Gen
 | **Date**       | **AI tool used** | **Purpose**                                | **Prompt**                                 | **Hyperlink to output (where possible)** | **Section of work used for** |
 |----------------|------------------|--------------------------------------------|--------------------------------------------|------------------------------------------|-------------------------------|
 | E.g. 15/07/2025| MS Copilot       | To help create an organised essay structure| ‘Generate ideas for structuring an essay on...’ | [insert link]                          | introduction                  |
-|                |                  |                                            |                                            |                                          |                               |
+|     06/12/25           |   chatgbt               |   help with coding BSCAN https://chatgpt.com/g/g-p-69341147abf8819199a8227401ffc62d-data-science-cw/c/693411af-0808-8328-bb46-cd95fd5bfd92                                         |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |

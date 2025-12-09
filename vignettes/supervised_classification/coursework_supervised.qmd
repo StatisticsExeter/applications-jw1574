@@ -31,13 +31,25 @@ The data have been used for various published supervised classification exercise
 
 In reducing the carbon footprint of UK housing, it is important to develop a strategy that offers the right solutions to the right properties. It is widely believed that houses build before 1930 require very different approaches to houses built after that period.  In this task, you are required to determine whether it is possible to determine the age of a house based on several recorded energy metrics. These are `current_energy_efficiency`, `environment_impact_current`, `energy_consumption_current`, `co2_emissions_current`, `lighting_cost_current`, `heating_cost_current`, `hot_water_cost_current`.  You have data for all certificates issued in a single local authority area.  This would help the local authority identify the right targets just using metrics rather than requiring a visit to the property to determine its age.
 
+```{python}
+#| echo: false
+#| results: 'asis'
+import sys
+from pathlib import Path
+
+# Change this to the root of your project
+project_root = Path(r"C:\Users\JWWeb\OneDrive - University of Exeter\Documents\applications-jw1574")
+
+# Add the project root to the Python path
+sys.path.append(str(project_root))
+```
 
 
 
 
 ## The Data
 
-A very simple preview of the data is given below:
+A preview of the data is given below:
 
 ```{python}
 #| echo: false
@@ -49,7 +61,7 @@ pd.set_option('display.width', None)
 df.head()
 ```
 
-And a clumsy presentation of some group summary statistics:
+A tidy table summery of the group statistics
 
 
 ```{python}
@@ -57,61 +69,57 @@ And a clumsy presentation of some group summary statistics:
 #| results: 'asis'
 import plotly.graph_objects as go
 df = pd.read_csv('../../data_cache/vignettes/supervised_classification/frequencies.csv')
+
 fig = go.Figure(data=[go.Table(
-    header=dict(values=list(df.columns),
-                fill_color='lightgrey',
-                align='left'),
+    header=dict(values=list(df.columns)), 
     cells=dict(values=[df[col] for col in df.columns],
                align='left')
 )])
 
-fig.update_layout(title="Group Summary Statistics")
+fig.update_layout(title="Frequencys")
 fig
 ```
-
-
-
 ```{python}
 #| echo: false
 #| results: 'asis'
 df = pd.read_csv('../../data_cache/vignettes/supervised_classification/grouped_stats.csv')
+header_values = list(df.columns)
+header_values[0] = "Varables"
 fig = go.Figure(
     data=[go.Table(
         header=dict(
-            values=list(df.columns),
-            fill_color='lightgrey',
-            align='left',
-            font=dict(size=12)
-        ),
+            values=header_values)
+            
+        ,
         cells=dict(
-            values=[df[col] for col in df.columns],
-            align='left',
-            font=dict(size=11)
+            values=[df[col] for col in df.columns]
+            
         )
     )]
-)
 
+)
 fig.update_layout(title="Grouped Summary Statistics")
 
 fig
 ```
  
-It is always useful to view a scatterplot of the data, marking the two known groups
+Here is a scatter plot of the two main groups
 
-![](../../data_cache/vignettes/supervised_classification.scatterplot.html){width="100%" height="600px"}
+![](scatterplot.html){width="100%" height="600px"}
 
-
-
-
+This scatter plot shows a positive correlation as higher energy efficiency corresponds to higher values of the other variable.At the mid range both age groups overlap. However new buildings are concentrated at higher efficient end where as older building show a greater variability
 
 
-For more marks, you may wish to extend this EDA section slightly.  We can extract the performance metrics from fitting such models:
 
 
-## Fitting LDA and QDA classifiers
+We can extract the performance metrics from fitting such models:
+
+
+##  Fitting LDA and QDA classifiers
 
 The simplest classifiers we could apply are Linear and Quadratic Discriminant analysis
 
+##  Results from LDA
 
 ```{python}
 #| echo: false
@@ -120,9 +128,44 @@ df = pd.read_csv('../../data_cache/vignettes/supervised_classification/lda.csv')
 df.rename(columns={"Unnamed: 0": "Category"}, inplace=True)
 print(df.round(3).to_markdown(index=False))
 ```
+These results from the LDA shows that it performs quite well but definitely not perfect. It also suggests that a lot of the relationships are linear. 
 
 
-### Results from fitting a quadratic discriminant analysis
+
+
+```{python}
+#| echo: false
+#| results: 'asis'
+import pandas as pd
+import plotly.express as px
+from sklearn.metrics import confusion_matrix
+
+# Load true labels and predictions (select the correct column)
+y_true = pd.read_csv('../../data_cache/energy_y_test.csv')['built_age']
+y_pred = pd.read_csv('../../data_cache/models/lda_y_pred.csv')['predicted_built_age']
+
+# Compute confusion matrix
+cm = confusion_matrix(y_true, y_pred)
+labels = sorted(y_true.unique())
+
+# Create interactive Plotly heatmap
+fig = px.imshow(
+    cm,
+    text_auto=True,
+    labels=dict(x='Predicted', y='Actual', color='Count'),
+    x=labels,
+    y=labels,
+    color_continuous_scale='Blues'
+)
+
+fig.update_layout(title='Confusion Matrix', width=600, height=500)
+fig.show()
+```
+This confusion matrix shows that the LDA classifier correctly classifies 6225 post-30s buildings and 8812 pre-30s buildings meaning it is a good classifier however it does suggest that the classifier is slightly biased towards pre-30s buildings . 2779 post-30s buildings were miss classified as pre-30s possibly due to the data-set containing overlaps in predictors. 2281 pre-30s building were miss classified as post-30s buildings because these buildings look too energy efficient maybe because they went under refurbishment or insulation refit. 
+
+Overall LDA performs reasonably well despite its simplicity. The miss classification could suggest the data-set has non-linear relationships so a different classier that captures non-linear relationships, such as random forests, could be a better choice.
+
+##  Results from fitting a quadratic discriminant analysis
 
 ```{python}
 #| echo: false
@@ -131,8 +174,42 @@ df = pd.read_csv('../../data_cache/vignettes/supervised_classification/qda.csv')
 df.rename(columns={"Unnamed: 0": "Category"}, inplace=True)
 print(df.round(3).to_markdown(index=False))
 ```
+The QDA does not perform as well as the LDA especially its F1 score. The QDA allows each variable to have its own covariance which makes it more flexible but requires more data which could suggest that the data might not have enough samples per class or the QDA is over fitting. 
 
-You should comment on these results. You may wish to add an interpretation of the coefficients of these classifiers.  Or there may be other metrics (confusion matrix) that you think should be presented.
+```{python}
+#| echo: false
+#| results: 'asis'
+import pandas as pd
+import plotly.express as px
+from sklearn.metrics import confusion_matrix
+
+# Load true labels and predictions (select the correct column)
+y_true = pd.read_csv('../../data_cache/energy_y_test.csv')['built_age']
+y_pred = pd.read_csv('../../data_cache/models/qda_y_pred.csv')['predicted_built_age']
+
+# Compute confusion matrix
+cm = confusion_matrix(y_true, y_pred)
+labels = sorted(y_true.unique())
+
+# Create interactive Plotly heatmap
+fig = px.imshow(
+    cm,
+    text_auto=True,
+    labels=dict(x='Predicted', y='Actual', color='Count'),
+    x=labels,
+    y=labels,
+    color_continuous_scale='Blues'
+)
+
+fig.update_layout(title='Confusion Matrix', width=600, height=500)
+fig.show()
+```
+The QDA confusion matrix shows a different pattern to the LDA matrix. It correctly identifies 7779 post-30s building but only 4425 pre-30s buildings, this suggests that QDA is far better at identifying post-30s houses. However 6668 pre-30s building were miss classified as post-30s compared to only 1005 buildings the other way around showing that the model is biased towards post-30s buildings. This is because the QDA is too flexible leading to instability or over fitting. 
+
+Overall QDA is not a suitable classification due to the in balance in predictors, as in there skewed to the post-30s buildings
+
+
+
 
 
 ## ROC curve (and AUC) for two simple classifiers
@@ -140,26 +217,72 @@ You should comment on these results. You may wish to add an interpretation of th
 We can of course examine the AUC for these classifiers.
 
 
-![](data_cache/vignettes/supervised_classification/roc.html){width="100%" height="600px"}
+![](roc.html){width="100%" height="600px"}
+
+Both LDA and QDA perform better than random (green line) however LDA slightly outperforms QDA in distinguishing between the classes (AUC 0.82 vs 0.79).The curves show that at lower false positive rates, LDA captures more true positives than QDA. LDA is still not ideal as the AUC<0.9 but if you had to choose out of the 2 LDA is the best choice. 
 
 
 
-You should comment on the performance of the classifier.
+##  Random forests  
 
-##  Additional credit
+I have chosen to try random forests as another classifier because several relationships in the data set might be non-linear. For example in older buildings the quality of insulation varies for stone or brick which will affect its energy performance. Random forests build a large number of decision trees which leads to a strong predictive performance. 
+```{python}
 
-For additional credit you should consider extended the pipeline and trying out other classifiers.
+#| echo: false
+#| results: 'asis'
+df = pd.read_csv('../../data_cache/vignettes/supervised_classification/rf.csv')
+df.rename(columns={"Unnamed: 0": "Category"}, inplace=True)
+print(df.round(3).to_markdown(index=False))
+```
+The Random forests outperform both classifiers only by a small margin. This suggest the data set does contain some nonlinear relationships built not enough to dramatically change the performance.
+```{python}
+#| echo: false
+#| results: 'asis'
+import pandas as pd
+import plotly.express as px
+from sklearn.metrics import confusion_matrix
+
+# Load true labels and predictions (select the correct column)
+y_true = pd.read_csv('../../data_cache/energy_y_test.csv')['built_age']
+y_pred = pd.read_csv('../../data_cache/models/rf_y_pred.csv')['built_age']
+
+# Compute confusion matrix
+cm = confusion_matrix(y_true, y_pred)
+labels = sorted(y_true.unique())
+
+# Create interactive Plotly heatmap
+fig = px.imshow(
+    cm,
+    text_auto=True,
+    labels=dict(x='Predicted', y='Actual', color='Count'),
+    x=labels,
+    y=labels,
+    color_continuous_scale='Blues'
+)
+
+fig.update_layout(title='Confusion Matrix', width=600, height=500)
+fig.show()
+```
+The Random forest matrix shows the classier has a strong performance with correctly identifying 6,574 Post-30s buildings and 9,022 Pre-30s buildings indicating that it performs well at recognizing both categories. As the miss classification numbers are relatively similar 2430 for post-30s and 2071 for pre-30s show that the model is not biased towards either class. This improved performance and non-biased could be due to random forests abilty to classify non-linear relationships. However it is still not perfect so again it suggests that there was not enough non-linear relationships in the data-set to improve the performance significantly.
+
+## Conclusion
+
+
+Across all classifiers it is evident that the data-set is not too complex. The LDA performs reasonably well suggesting that much of the relationships between the predictors and building ages are linear. QDA while more flexible performed worse and showed clear biased towards post-30s buildings. Random forest performed the best out of the 3 and was the best balanced. This suggests that some nonlinear relationships were present but because it only slightly outperformed the LDA there weren't a significant amount of them to make a dramatic difference. 
+
+As for next steps it would be useful to try more advanced ensemble methods such as Gradient Boosting or XGBoost because they can offer higher accuracy, better calibration and more interpretable structure in this case due Random Forest showing only moderate gains over LDA.
 
 
 ## Record of AI use for MTHM503 supervised coursework
+
 
 Instructions: You can use this document to record when, how and why you used GenAI to complete your assessment. It will help you create a record of AI use to submit alongside your references for AI-integrated and AI-assisted assignments. It may also be useful to help you discuss your AI use if you are required to do so in an academic conduct meeting.
 
 | **Date**       | **AI tool used** | **Purpose**                                | **Prompt**                                 | **Hyperlink to output (where possible)** | **Section of work used for** |
 |----------------|------------------|--------------------------------------------|--------------------------------------------|------------------------------------------|-------------------------------|
 | E.g. 15/07/2025| MS Copilot       | To help create an organised essay structure| ‘Generate ideas for structuring an essay on...’ | [insert link]                          | introduction                  |
-|                |                  |                                            |                                            |                                          |                               |
-|                |                  |                                            |                                            |                                          |                               |
+| 06/12/25             |chatgbt                  |help to code confusion matrix https://chatgpt.com/c/69340f7a-1c5c-8333-ae41-9583db7b6a62                                            |                                            |                                          |                               |
+| 08/12/25               |  help with coding random forests https://chatgpt.com/g/g-p-69341147abf8819199a8227401ffc62d/c/6936e9fc-07f8-832b-ac8e-10616dd9dc16                |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
 |                |                  |                                            |                                            |                                          |                               |
